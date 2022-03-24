@@ -27,10 +27,10 @@ class ReSpeaker_4mic_hat(MycroftSkill):
 
 	def __init__(self):
 		super(ReSpeaker_4mic_hat, self).__init__(name="ReSpeaker_4mic_hat")
-                self.pattern = "echo"
+		self.pattern = "echo"
 
 	def initialize(self):
-                self.pattern = self.settings.get("pattern", "echo")
+		self.pattern = self.settings.get("pattern", "echo")
 		self.log.info("Pixel Ring: Initializing")
 		self.power = LED(5)
 		self.power.on()
