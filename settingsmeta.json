@@ -15,6 +15,16 @@
                         "label": "Options",
                         "options": "Echo|echo;Google|google",
                         "value": "echo"
+                    },
+					{
+						"type": "label",
+						"label": "Enter GPIO pin to use:"
+					},
+					{
+                        "name": "gpio",
+                        "type": "text",
+                        "label": "button",
+                        "value": "26"
                     }
 
                 ]

@@ -15,21 +15,27 @@
 import time
 
 from mycroft.messagebus.message import Message
-from mycroft.skills.core import MycroftSkill, intent_handler
+from mycroft.skills.core import MycroftSkill, intent_handler, intent_file_handler
 from adapt.intent import IntentBuilder
-from mycroft.util.log import LOG
-from mycroft import intent_file_handler
+from mycroft.util.log import LOG, getLogger
+import subprocess
+import time
 
 from pixel_ring import pixel_ring
 from gpiozero import LED
+
+LOGGER = getLogger(__name__)
 
 class ReSpeaker_4mic_hat(MycroftSkill):
 
 	def __init__(self):
 		super(ReSpeaker_4mic_hat, self).__init__(name="ReSpeaker_4mic_hat")
 		self.pattern = "echo"
+		self.proc = None
+		self.button_pin = 0
 
 	def initialize(self):
+		self.button_pin = self.settings.get("gpio", "26")
 		self.pattern = self.settings.get("pattern", "echo")
 		self.log.info("Pixel Ring: Initializing")
 		self.power = LED(5)
@@ -38,6 +44,23 @@ class ReSpeaker_4mic_hat(MycroftSkill):
 		pixel_ring.change_pattern(self.pattern)
 		pixel_ring.wakeup()
 		self.enable()
+		self._start()
+
+	def on_websettings_changed(self):
+        """Callback triggered anytime Skill settings are modified on backend."""
+        self._stop()
+        self.button_pin = self.settings.get("gpio", "26")
+        self._start()
+
+	def _check_gpio_changed(self):
+        # check if the gpio pin has changed
+        if self.settings.get("station") != self.button_pin:
+            LOGGER.info("GPIO pin changed")
+            # restart button.py with the new pin assigned
+            self._stop()
+            time.sleep(2)  # chose an arbitrary value
+            self.button_pin = self.settings.get("gpio", "26")
+            self.start()
 
 	def enable(self):
 		self.log.info("Pixel Ring: Enabling")
@@ -72,6 +95,9 @@ class ReSpeaker_4mic_hat(MycroftSkill):
 		self.log.info("Pixel Ring: Shutdown")
 		pixel_ring.off()
 		self.power.off()
+        # shutdown the button.py process
+		self._stop()
+		super(ReSpeaker_4mic_hat, self).shutdown()
 
 	def handle_listener_wakeup(self, message):
 		self.log.info("Pixel Ring: Wakeup")
@@ -89,6 +115,14 @@ class ReSpeaker_4mic_hat(MycroftSkill):
 		self.log.info("Pixel Ring: Speak")
 		pixel_ring.speak()
 
+	def _start(self):
+        self.proc = subprocess.Popen(['python', self.root_dir + '/button.py', self.button_pin])
+        LOGGER.info('button process pid = ' + str(self.proc.pid))
+    
+	def _stop(self):
+        self.proc.kill()
+        LOGGER.info('Shutting down button.py')
+        		
 	@intent_handler(IntentBuilder("").require("EnablePixelRing"))
 	def handle_enable_pixel_ring_intent(self, message):
 		self.enable()
