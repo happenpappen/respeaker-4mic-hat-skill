@@ -47,10 +47,10 @@ class ReSpeaker_4mic_hat(MycroftSkill):
 		self._start()
 
 	def on_websettings_changed(self):
-        """Callback triggered anytime Skill settings are modified on backend."""
-        self._stop()
-        self.button_pin = self.settings.get("gpio", "26")
-        self._start()
+		"""Callback triggered anytime Skill settings are modified on backend."""
+		self._stop()
+		self.button_pin = self.settings.get("gpio", "26")
+		self._start()
 
 	def _check_gpio_changed(self):
         # check if the gpio pin has changed
